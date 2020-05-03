@@ -17,16 +17,16 @@ CREATE TABLE followers  (
   since    TIMESTAMP     NOT NULL -- Time and date actor followed me
 );
 
--- List of activities recieved.
+-- List of activities published.
 CREATE TABLE outbox (
   id       VARCHAR(2048) NOT NULL PRIMARY KEY, -- URL to incoming activity.
-  actor    VARCHAR(2048) NOT NULL REFERENCES actors(id), -- Actor that published activity.
+--  actor    VARCHAR(2048) NOT NULL REFERENCES actors(id), -- Not needed, always me.
   payload  JSON -- Content of entire activity.
 );
 
--- List of activities published.
+-- List of activities recieved.
 CREATE TABLE inbox (
   id       VARCHAR(2048) NOT NULL PRIMARY KEY, -- URL for published activity.
---  actor    VARCHAR(2048) NOT NULL REFERENCES actors(id), -- Not needed, always me.
+  actor    VARCHAR(2048) NOT NULL REFERENCES actors(id), -- Actor that published activity.,
   payload  JSON -- Content of entire activity.
 );

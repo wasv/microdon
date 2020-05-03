@@ -1,4 +1,4 @@
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::connection::Conn;
 use crate::schema::inbox;
@@ -7,21 +7,23 @@ use crate::schema::inbox;
 #[table_name = "inbox"]
 pub struct InboxActivity {
     pub id: String,
+    pub actor: String,
     pub payload: Option<serde_json::Value>,
 }
 
 pub fn create_inbox_activity(
     inbox_activity: InboxActivity,
     connection: &Conn,
-) -> Option<InboxActivity> {
+) -> QueryResult<InboxActivity> {
     diesel::insert_into(inbox::table)
         .values(&inbox_activity)
-        .get_result(connection)
-        .ok()
+        .on_conflict_do_nothing()
+        .execute(connection)?;
+    read_inbox_activity(inbox_activity.id, connection)
 }
 
-pub fn read_inbox_activity(id: String, connection: &Conn) -> Option<InboxActivity> {
-    inbox::table.find(id).first(connection).ok()
+pub fn read_inbox_activity(id: String, connection: &Conn) -> QueryResult<InboxActivity> {
+    inbox::table.find(id).first(connection)
 }
 
 pub fn list_inbox(connection: &Conn) -> Vec<InboxActivity> {

@@ -1,7 +1,7 @@
 use rocket_contrib::json::{Json, JsonValue};
 
-use satchel::connection;
-use satchel::models::inbox::*;
+use microdon::connection;
+use microdon::models::inbox::*;
 
 #[post("/", data = "<activity>")]
 pub fn create(
@@ -21,7 +21,9 @@ pub fn list_all(connection: connection::DbConn) -> Json<Vec<InboxActivity>> {
 
 #[get("/<id>")]
 pub fn read(id: String, connection: connection::DbConn) -> Option<Json<InboxActivity>> {
-    read_inbox_activity(id, &connection).and_then(|activity| Some(Json(activity)))
+    read_inbox_activity(id, &connection)
+        .and_then(|activity| Ok(Json(activity)))
+        .ok()
 }
 
 #[put("/", data = "<activity>")]

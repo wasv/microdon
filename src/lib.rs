@@ -7,7 +7,10 @@ extern crate r2d2;
 extern crate rocket;
 #[macro_use]
 extern crate serde_derive;
+extern crate reqwest;
+extern crate serde_json;
 
 pub mod connection;
+pub mod handlers;
 pub mod models;
 pub mod schema;

@@ -7,7 +7,6 @@ use crate::schema::outbox;
 #[table_name = "outbox"]
 pub struct OutboxActivity {
     pub id: String,
-    pub actor: String,
     pub payload: Option<serde_json::Value>,
 }
 

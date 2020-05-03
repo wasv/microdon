@@ -1,5 +1,5 @@
 [package]
-name = "satchel_controller"
+name = "microdon"
 version = "0.1.0"
 authors = ["William Stevens <contact@wastevensv.com>"]
 edition = "2018"
@@ -7,8 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "satchel"
+name = "microdon"
 path = "src/lib.rs"
+
+[features]
+default = ["cli"]
+cli = ["clap"]
 
 [dependencies]
 rocket = "0.4"
@@ -20,3 +24,5 @@ dotenv = "0.9.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+clap = { version = "2", optional=true }
+reqwest = { version = "0.10", features = ["blocking", "json"] }

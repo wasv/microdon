@@ -23,6 +23,7 @@ table! {
 table! {
     inbox (id) {
         id -> Varchar,
+        actor -> Varchar,
         payload -> Nullable<Json>,
     }
 }
@@ -30,13 +31,12 @@ table! {
 table! {
     outbox (id) {
         id -> Varchar,
-        actor -> Varchar,
         payload -> Nullable<Json>,
     }
 }
 
 joinable!(followers -> actors (actor));
 joinable!(following -> actors (actor));
-joinable!(outbox -> actors (actor));
+joinable!(inbox -> actors (actor));
 
 allow_tables_to_appear_in_same_query!(actors, followers, following, inbox, outbox,);
