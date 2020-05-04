@@ -11,7 +11,9 @@ pub fn create(
     let insert = InboxActivity {
         ..activity.into_inner()
     };
-    create_inbox_activity(insert, &connection).and_then(|activity| Some(Json(activity)))
+    create_inbox_activity(insert, &connection)
+        .and_then(|activity| Ok(Json(activity)))
+        .ok()
 }
 
 #[get("/")]

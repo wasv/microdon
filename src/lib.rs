@@ -9,6 +9,8 @@ extern crate rocket;
 extern crate serde_derive;
 extern crate reqwest;
 extern crate serde_json;
+#[macro_use]
+extern crate log;
 
 pub mod connection;
 pub mod handlers;

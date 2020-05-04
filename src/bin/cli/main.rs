@@ -1,22 +1,19 @@
 extern crate clap;
 extern crate diesel;
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
 
 use clap::{App, SubCommand};
 use microdon::connection;
 use microdon::handlers;
 
 fn main() {
+    pretty_env_logger::init();
     let args = App::new("myprog")
         .subcommands(vec![
-            SubCommand::with_name("create").about("Add create activity to outbox."),
-            SubCommand::with_name("announce").about("Add announce activity to outbox."),
-            SubCommand::with_name("delete").about("Add delete activity from outbox."),
-            SubCommand::with_name("follow").about("Add follow activity to outbox."),
-            SubCommand::with_name("rx-create").about("Add create actiivity to inbox."),
-            SubCommand::with_name("rx-announce").about("Add announce activity to inbox."),
-            SubCommand::with_name("rx-accept").about("Add accept activity to inbox"),
-            SubCommand::with_name("rx-delete").about("Add delete activity to inbox"),
-            SubCommand::with_name("rx-follow").about("Add follow activity to inbox"),
+            SubCommand::with_name("inbox").about("Add activity to inbox"),
+            SubCommand::with_name("outbox").about("Add activity to outbox"),
         ])
         .get_matches();
 
@@ -25,17 +22,9 @@ fn main() {
     let activity = serde_json::from_reader(std::io::stdin().lock()).unwrap();
 
     match args.subcommand_name() {
-        Some("create") => handlers::inbox::create(db, activity),
-        Some("announce") => handlers::inbox::announce(db, activity),
-        Some("delete") => handlers::inbox::delete(db, activity),
-        Some("follow") => handlers::inbox::follow(db, activity),
-        Some("accept") => Err("Not Implemented".to_string()),
-        Some("rx-create") => Err("Not Implemented".to_string()),
-        Some("rx-announce") => Err("Not Implemented".to_string()),
-        Some("rx-accept") => Err("Not Implemented".to_string()),
-        Some("rx-delete") => Err("Not Implemented".to_string()),
-        Some("rx-follow") => Err("Not Implemented".to_string()),
+        Some("inbox") => handlers::inbox::create(db, activity).and_then(|a| {trace!("Activity:\n {:#?}", a);Ok(())}),
+        Some("outbox") => handlers::outbox::create(db, activity).and_then(|a| {trace!("Activity:\n {:#?}", a);Ok(())}),
         _ => Err("Invalid command.".to_string()),
     }
-    .unwrap_or_else(|e| eprintln!("Error: {}", e))
+    .unwrap_or_else(|e| error!("{}", e))
 }

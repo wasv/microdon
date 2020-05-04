@@ -3,7 +3,7 @@ use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 use crate::connection::Conn;
 use crate::schema::inbox;
 
-#[derive(Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
+#[derive(Debug, Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "inbox"]
 pub struct InboxActivity {
     pub id: String,
