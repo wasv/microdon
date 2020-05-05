@@ -43,31 +43,28 @@ pub struct FollowedActor {
 /// If the actor does not exist, this function gets the actor
 /// through activitypub, and inserts it into the database using [`insert_actor`].
 pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
-    match read_actor(id.to_string(), &connection) {
-        Err(_) => {
-            let actor: serde_json::Value = reqwest::blocking::Client::new()
-                .get(id)
-                .header(reqwest::header::ACCEPT, "application/activity+json")
-                .send()
-                .and_then(|r| r.json())
-                .or(Err("Could not get actor."))?;
-            let name = actor["preferredUsername"]
-                .as_str()
-                .ok_or("No actor username")?;
-            let url = actor["url"].as_str().ok_or("No actor url")?;
-            let actor = insert_actor(
-                Actor {
-                    id: id.to_string(),
-                    username: name.to_string(),
-                    profile: url.to_string(),
-                },
-                &connection,
-            )
-            .or(Err("Cannot create actor."))?;
-            Ok(actor)
-        }
-        Ok(actor) => Ok(actor),
-    }
+    read_actor(id.to_string(), &connection).or_else(|_| {
+        let actor: serde_json::Value = reqwest::blocking::Client::new()
+            .get(id)
+            .header(reqwest::header::ACCEPT, "application/activity+json")
+            .send()
+            .and_then(|r| r.json())
+            .or(Err("Could not get actor."))?;
+        let name = actor["preferredUsername"]
+            .as_str()
+            .ok_or("No actor username")?;
+        let url = actor["url"].as_str().ok_or("No actor url")?;
+        let actor = insert_actor(
+            Actor {
+                id: id.to_string(),
+                username: name.to_string(),
+                profile: url.to_string(),
+            },
+            &connection,
+        )
+        .or(Err("Cannot create actor."))?;
+        Ok(actor)
+    })
 }
 
 /// Inserts an actor into the database.
