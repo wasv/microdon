@@ -82,6 +82,8 @@ pub fn insert_actor(actor: Actor, connection: &Conn) -> QueryResult<Actor> {
 }
 
 /// Reads an actor from the database table based on the Actor's id.
+///
+/// Not recommended for direct use. Use [`get_actor`] instead.
 pub fn read_actor(id: String, connection: &Conn) -> QueryResult<Actor> {
     actors::table.find(id).first(connection)
 }
