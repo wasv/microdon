@@ -37,7 +37,7 @@ pub fn list_inbox(connection: &Conn) -> Vec<InboxActivity> {
     inbox::table
         .order(inbox::id.asc())
         .load::<InboxActivity>(connection)
-        .unwrap_or(Vec::new())
+        .unwrap_or_default()
 }
 
 /// Updates an activity in the inbox.

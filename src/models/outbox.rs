@@ -22,6 +22,7 @@ pub fn insert_outbox_activity(
 ) -> QueryResult<OutboxActivity> {
     diesel::insert_into(outbox::table)
         .values(&outbox_activity)
+        .on_conflict_do_nothing()
         .execute(connection)?;
     read_outbox_activity(outbox_activity.id, connection)
 }
@@ -36,7 +37,7 @@ pub fn list_outbox(connection: &Conn) -> Vec<OutboxActivity> {
     outbox::table
         .order(outbox::id.asc())
         .load::<OutboxActivity>(connection)
-        .unwrap_or(Vec::new())
+        .unwrap_or_default()
 }
 
 /// Updates an activity in the outbox.

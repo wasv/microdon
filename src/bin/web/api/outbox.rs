@@ -11,9 +11,7 @@ pub fn create(
     let insert = OutboxActivity {
         ..activity.into_inner()
     };
-    insert_outbox_activity(insert, &connection)
-        .and_then(|activity| Ok(Json(activity)))
-        .ok()
+    insert_outbox_activity(insert, &connection).map(Json).ok()
 }
 
 #[get("/")]
@@ -23,9 +21,7 @@ pub fn list_all(connection: connection::DbConn) -> Json<Vec<OutboxActivity>> {
 
 #[get("/<id>")]
 pub fn read(id: String, connection: connection::DbConn) -> Option<Json<OutboxActivity>> {
-    read_outbox_activity(id, &connection)
-        .and_then(|activity| Ok(Json(activity)))
-        .ok()
+    read_outbox_activity(id, &connection).map(Json).ok()
 }
 
 #[put("/", data = "<activity>")]

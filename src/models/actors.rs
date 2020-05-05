@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl};
 
 use crate::connection::Conn;
 use crate::schema::{actors, followers, following};
@@ -44,7 +44,7 @@ pub struct FollowedActor {
 /// through activitypub, and inserts it into the database using [`insert_actor`].
 pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
     match read_actor(id.to_string(), &connection) {
-        None => {
+        Err(_) => {
             let actor: serde_json::Value = reqwest::blocking::Client::new()
                 .get(id)
                 .header(reqwest::header::ACCEPT, "application/activity+json")
@@ -63,26 +63,27 @@ pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
                 },
                 &connection,
             )
-            .ok_or("Cannot create actor.")?;
+            .or(Err("Cannot create actor."))?;
             Ok(actor)
         }
-        Some(actor) => Ok(actor),
+        Ok(actor) => Ok(actor),
     }
 }
 
 /// Inserts an actor into the database.
 ///
 /// Not recommended for direct use. Use [`get_actor`] instead.
-pub fn insert_actor(actor: Actor, connection: &Conn) -> Option<Actor> {
+pub fn insert_actor(actor: Actor, connection: &Conn) -> QueryResult<Actor> {
     diesel::insert_into(actors::table)
         .values(&actor)
-        .get_result(connection)
-        .ok()
+        .on_conflict_do_nothing()
+        .execute(connection)?;
+    read_actor(actor.id, connection)
 }
 
 /// Reads an actor from the database table based on the Actor's id.
-pub fn read_actor(id: String, connection: &Conn) -> Option<Actor> {
-    actors::table.find(id).first(connection).ok()
+pub fn read_actor(id: String, connection: &Conn) -> QueryResult<Actor> {
+    actors::table.find(id).first(connection)
 }
 
 /// Lists all actors in the database.
@@ -90,7 +91,7 @@ pub fn list_actors(connection: &Conn) -> Vec<Actor> {
     actors::table
         .order(actors::id.asc())
         .load::<Actor>(connection)
-        .unwrap_or(Vec::new())
+        .unwrap_or_default()
 }
 
 /// Updates an actor in the database.
@@ -132,7 +133,7 @@ pub fn list_followers(connection: &Conn) -> Vec<(Follower, Actor)> {
         .order(followers::since.asc())
         .inner_join(actors::table)
         .load::<(Follower, Actor)>(connection)
-        .unwrap_or(Vec::new())
+        .unwrap_or_default()
 }
 
 /// Adds an actor that the user follows.
@@ -159,5 +160,5 @@ pub fn list_following(connection: &Conn) -> Vec<(FollowedActor, Actor)> {
         .order(following::since.asc())
         .inner_join(actors::table)
         .load::<(FollowedActor, Actor)>(connection)
-        .unwrap_or(Vec::new())
+        .unwrap_or_default()
 }

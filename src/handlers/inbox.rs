@@ -31,7 +31,7 @@ fn add_to_inbox(connection: DbConn, payload: serde_json::Value) -> Result<InboxA
     let activity = insert_inbox_activity(
         InboxActivity {
             id: activity_id.to_string(),
-            actor: actor.id.to_string(),
+            actor: actor.id,
             payload: Some(payload),
         },
         &connection,

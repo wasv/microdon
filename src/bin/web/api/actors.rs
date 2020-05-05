@@ -8,7 +8,7 @@ pub fn create(actor: Json<Actor>, connection: connection::DbConn) -> Option<Json
     let insert = Actor {
         ..actor.into_inner()
     };
-    insert_actor(insert, &connection).and_then(|actor| Some(Json(actor)))
+    insert_actor(insert, &connection).map(Json).ok()
 }
 
 #[get("/")]
@@ -18,7 +18,7 @@ pub fn list_all(connection: connection::DbConn) -> Json<Vec<Actor>> {
 
 #[get("/<id>")]
 pub fn read(id: String, connection: connection::DbConn) -> Option<Json<Actor>> {
-    read_actor(id, &connection).and_then(|actor| Some(Json(actor)))
+    read_actor(id, &connection).map(Json).ok()
 }
 
 #[put("/", data = "<actor>")]
