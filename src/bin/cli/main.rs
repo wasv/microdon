@@ -22,8 +22,14 @@ fn main() {
     let activity = serde_json::from_reader(std::io::stdin().lock()).unwrap();
 
     match args.subcommand_name() {
-        Some("inbox") => handlers::inbox::create(db, activity).and_then(|a| {trace!("Activity:\n {:#?}", a);Ok(())}),
-        Some("outbox") => handlers::outbox::create(db, activity).and_then(|a| {trace!("Activity:\n {:#?}", a);Ok(())}),
+        Some("inbox") => handlers::inbox::create(db, activity).and_then(|a| {
+            trace!("Activity:\n {:#?}", a);
+            Ok(())
+        }),
+        Some("outbox") => handlers::outbox::create(db, activity).and_then(|a| {
+            trace!("Activity:\n {:#?}", a);
+            Ok(())
+        }),
         _ => Err("Invalid command.".to_string()),
     }
     .unwrap_or_else(|e| error!("{}", e))

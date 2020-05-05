@@ -13,6 +13,7 @@ embed_migrations!("migrations/");
 
 pub(crate) type Conn = PgConnection;
 
+/// Generates database url from environment variables.
 fn database_url() -> String {
     dotenv().ok();
     let dbhost = env::var("DATABASE_HOST").expect("DATABASE_HOST must be set");
@@ -22,10 +23,13 @@ fn database_url() -> String {
     format!("postgres://{}:{}@{}/{}", dbuser, dbpass, dbhost, dbname)
 }
 
+/// Shorthand type for the pooled database connection.
 pub struct DbConn(pub r2d2::PooledConnection<ConnectionManager<Conn>>);
 
+/// Shorthand type for the database pool.
 type Pool = r2d2::Pool<ConnectionManager<Conn>>;
 
+/// Creates a new database pool.
 pub fn init_pool() -> Pool {
     let manager = ConnectionManager::<Conn>::new(database_url());
     let pool =
@@ -34,6 +38,7 @@ pub fn init_pool() -> Pool {
     pool
 }
 
+/// Preforms database migration.
 pub fn perform_migrations(pool: &Pool) {
     let conn = pool.get().unwrap();
     embedded_migrations::run(&conn).unwrap_or_else(|_| panic!("Error running migration."));

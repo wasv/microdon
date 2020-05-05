@@ -8,7 +8,7 @@ pub fn create(actor: Json<Actor>, connection: connection::DbConn) -> Option<Json
     let insert = Actor {
         ..actor.into_inner()
     };
-    create_actor(insert, &connection).and_then(|actor| Some(Json(actor)))
+    insert_actor(insert, &connection).and_then(|actor| Some(Json(actor)))
 }
 
 #[get("/")]

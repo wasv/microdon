@@ -11,7 +11,7 @@ pub fn create(
     let insert = OutboxActivity {
         ..activity.into_inner()
     };
-    create_outbox_activity(insert, &connection)
+    insert_outbox_activity(insert, &connection)
         .and_then(|activity| Ok(Json(activity)))
         .ok()
 }

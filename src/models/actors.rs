@@ -5,28 +5,43 @@ use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use crate::connection::Conn;
 use crate::schema::{actors, followers, following};
 
+/// A model for storing an actor in a database.
 #[derive(Debug, Identifiable, Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "actors"]
 pub struct Actor {
+    /// The id of the actor as the URL to the ActivityPub Actor document.
     pub id: String,
+    /// The username of the actor. preferredUsername from JSON actor.
     pub username: String,
+    /// The URL to the users human readable profile.
     pub profile: String,
 }
 
+/// A model for storing an actor who follows the user in a database.
 #[derive(Debug, Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "followers"]
 pub struct Follower {
+    /// Foreign key to the associated actor, in the form of a URL to the ActivityPub Actor document.
     pub actor: String,
+    /// Timestamp of when this Actor followed the user.
     pub since: SystemTime,
 }
 
+/// A model for representing an actor the user follows.
 #[derive(Debug, Insertable, Queryable, AsChangeset, Serialize, Deserialize)]
 #[table_name = "following"]
 pub struct FollowedActor {
+    /// Foreign key to the associated actor, in the form of a URL to the ActivityPub Actor document.
     pub actor: String,
+    /// Timestamp of when the user followed this Actor.
     pub since: SystemTime,
 }
 
+/// Reads or creates a record for an actor.
+///
+/// If the actor exists, this function reads the record from the database.
+/// If the actor does not exist, this function gets the actor
+/// through activitypub, and inserts it into the database using [`insert_actor`].
 pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
     match read_actor(id.to_string(), &connection) {
         None => {
@@ -36,9 +51,11 @@ pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
                 .send()
                 .and_then(|r| r.json())
                 .or(Err("Could not get actor."))?;
-            let name = actor["name"].as_str().ok_or("No actor name")?;
+            let name = actor["preferredUsername"]
+                .as_str()
+                .ok_or("No actor username")?;
             let url = actor["url"].as_str().ok_or("No actor url")?;
-            let actor = create_actor(
+            let actor = insert_actor(
                 Actor {
                     id: id.to_string(),
                     username: name.to_string(),
@@ -53,17 +70,22 @@ pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
     }
 }
 
-pub fn create_actor(actor: Actor, connection: &Conn) -> Option<Actor> {
+/// Inserts an actor into the database.
+///
+/// Not recommended for direct use. Use [`get_actor`] instead.
+pub fn insert_actor(actor: Actor, connection: &Conn) -> Option<Actor> {
     diesel::insert_into(actors::table)
         .values(&actor)
         .get_result(connection)
         .ok()
 }
 
+/// Reads an actor from the database table based on the Actor's id.
 pub fn read_actor(id: String, connection: &Conn) -> Option<Actor> {
     actors::table.find(id).first(connection).ok()
 }
 
+/// Lists all actors in the database.
 pub fn list_actors(connection: &Conn) -> Vec<Actor> {
     actors::table
         .order(actors::id.asc())
@@ -71,6 +93,7 @@ pub fn list_actors(connection: &Conn) -> Vec<Actor> {
         .unwrap_or(Vec::new())
 }
 
+/// Updates an actor in the database.
 pub fn update_actor(actor: Actor, connection: &Conn) -> bool {
     diesel::update(actors::table.find(actor.id.clone()))
         .set(actor)
@@ -78,12 +101,14 @@ pub fn update_actor(actor: Actor, connection: &Conn) -> bool {
         .is_ok()
 }
 
+/// Deletes an actor from the database.
 pub fn delete_actor(id: String, connection: &Conn) -> bool {
     diesel::delete(actors::table.find(id))
         .execute(connection)
         .is_ok()
 }
 
+/// Add an actor as a new follower.
 pub fn add_follower(actor: Actor, connection: &Conn) -> Option<Follower> {
     diesel::insert_into(followers::table)
         .values(Follower {
@@ -94,6 +119,23 @@ pub fn add_follower(actor: Actor, connection: &Conn) -> Option<Follower> {
         .ok()
 }
 
+/// Removes a follower when the actor unfollows the user.
+pub fn delete_follower(actor: Actor, connection: &Conn) -> bool {
+    diesel::delete(followers::table.find(actor.id))
+        .execute(connection)
+        .is_ok()
+}
+
+/// Lists all of the users followers from the database.
+pub fn list_followers(connection: &Conn) -> Vec<(Follower, Actor)> {
+    followers::table
+        .order(followers::since.asc())
+        .inner_join(actors::table)
+        .load::<(Follower, Actor)>(connection)
+        .unwrap_or(Vec::new())
+}
+
+/// Adds an actor that the user follows.
 pub fn follow_actor(actor: Actor, connection: &Conn) -> Option<FollowedActor> {
     diesel::insert_into(following::table)
         .values(FollowedActor {
@@ -104,14 +146,14 @@ pub fn follow_actor(actor: Actor, connection: &Conn) -> Option<FollowedActor> {
         .ok()
 }
 
-pub fn list_followers(connection: &Conn) -> Vec<(Follower, Actor)> {
-    followers::table
-        .order(followers::since.asc())
-        .inner_join(actors::table)
-        .load::<(Follower, Actor)>(connection)
-        .unwrap_or(Vec::new())
+/// Removes an actor that the user no longer follows.
+pub fn unfollow_actor(actor: Actor, connection: &Conn) -> bool {
+    diesel::delete(following::table.find(actor.id))
+        .execute(connection)
+        .is_ok()
 }
 
+/// Lists all of the actors that the user follows from the database.
 pub fn list_following(connection: &Conn) -> Vec<(FollowedActor, Actor)> {
     following::table
         .order(following::since.asc())
