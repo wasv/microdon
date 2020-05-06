@@ -37,34 +37,36 @@ pub struct FollowedActor {
     pub since: SystemTime,
 }
 
-/// Reads or creates a record for an actor.
+/// Retrieves, parses, and inserts an actor given an ID.
 ///
-/// If the actor exists, this function reads the record from the database.
-/// If the actor does not exist, this function gets the actor
-/// through activitypub, and inserts it into the database using [`insert_actor`].
-pub fn get_actor(id: &str, connection: &Conn) -> Result<Actor, String> {
-    read_actor(id.to_string(), &connection).or_else(|_| {
-        let actor: serde_json::Value = reqwest::blocking::Client::new()
-            .get(id)
-            .header(reqwest::header::ACCEPT, "application/activity+json")
-            .send()
-            .and_then(|r| r.json())
-            .or(Err("Could not get actor."))?;
-        let name = actor["preferredUsername"]
-            .as_str()
-            .ok_or("No actor username")?;
-        let url = actor["url"].as_str().ok_or("No actor url")?;
-        let actor = insert_actor(
-            Actor {
-                id: id.to_string(),
-                username: name.to_string(),
-                profile: url.to_string(),
-            },
-            &connection,
-        )
-        .or(Err("Cannot create actor."))?;
-        Ok(actor)
-    })
+/// Meant to be used alongside [`read_actor`].
+///
+/// ```
+/// let actor_id = "https://mastodon.social/users/Gargon";
+///
+/// let actor = read_actor(id, connection).or_else(|| get_actor(id, connection));
+/// ```
+pub fn get_actor(id: String, connection: &Conn) -> Result<Actor, String> {
+    let actor: serde_json::Value = reqwest::blocking::Client::new()
+        .get(&id)
+        .header(reqwest::header::ACCEPT, "application/activity+json")
+        .send()
+        .and_then(|r| r.json())
+        .or(Err("Could not get actor."))?;
+    let name = actor["preferredUsername"]
+        .as_str()
+        .ok_or("No actor username")?;
+    let url = actor["url"].as_str().ok_or("No actor url")?;
+    let actor = insert_actor(
+        Actor {
+            id,
+            username: name.to_string(),
+            profile: url.to_string(),
+        },
+        &connection,
+    )
+    .or(Err("Cannot create actor."))?;
+    Ok(actor)
 }
 
 /// Inserts an actor into the database.
@@ -80,7 +82,13 @@ pub fn insert_actor(actor: Actor, connection: &Conn) -> QueryResult<Actor> {
 
 /// Reads an actor from the database table based on the Actor's id.
 ///
-/// Not recommended for direct use. Use [`get_actor`] instead.
+/// Meant to be used alongside [`get_actor`].
+///
+/// ```
+/// let actor_id = "https://mastodon.social/users/Gargon";
+///
+/// let actor = read_actor(id, connection).or_else(|_| get_actor(id, connection));
+/// ```
 pub fn read_actor(id: String, connection: &Conn) -> QueryResult<Actor> {
     actors::table.find(id).first(connection)
 }

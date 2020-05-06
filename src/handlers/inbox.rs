@@ -23,8 +23,9 @@ fn add_to_inbox(connection: DbConn, payload: serde_json::Value) -> Result<InboxA
     let activity_id = payload["id"].as_str().ok_or("No activity id")?;
     let actor_id = payload["actor"].as_str().ok_or("No actor id")?;
 
-    let actor =
-        get_actor(actor_id, &connection).or_else(|e| Err(format!("Couldn't get actor {}", e)))?;
+    let actor = read_actor(actor_id.to_string(), &connection).or_else(|_| {
+        get_actor(actor_id.to_string(), &connection).or_else(|e| Err(format!("Couldn't get actor {}", e)))
+    })?;
 
     trace!("Actor:\n {:#?}", actor);
 
