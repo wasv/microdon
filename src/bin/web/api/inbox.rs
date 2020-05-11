@@ -1,40 +1,21 @@
-use rocket_contrib::json::{Json, JsonValue};
+use microdon::connection::DbConn;
+use microdon::handlers::inbox;
+use microdon::models::Activity;
 
-use microdon::connection;
-use microdon::models::inbox::*;
+use rocket_contrib::json::Json;
 
-#[post("/", data = "<activity>")]
-pub fn create(
-    activity: Json<InboxActivity>,
-    connection: connection::DbConn,
-) -> Option<Json<InboxActivity>> {
-    let insert = InboxActivity {
-        ..activity.into_inner()
-    };
-    insert_inbox_activity(insert, &connection).map(Json).ok()
+#[post("/", format = "json", data = "<data>")]
+pub fn post(data: String, connection: DbConn) -> Result<(), String> {
+    serde_json::from_str(&data)
+        .or(Err("JSON Error".to_string()))
+        .and_then(|data| {
+            inbox::create(connection, data)
+                .and(Ok(()))
+        })
 }
 
 #[get("/")]
-pub fn list_all(connection: connection::DbConn) -> Json<Vec<InboxActivity>> {
-    Json(list_inbox(&connection))
-}
+pub fn get(connection: DbConn) -> Json<Vec<Activity>> {
+    Json(Activity::list(&connection))
 
-#[get("/<id>")]
-pub fn read(id: String, connection: connection::DbConn) -> Option<Json<InboxActivity>> {
-    read_inbox_activity(id, &connection).map(Json).ok()
-}
-
-#[put("/", data = "<activity>")]
-pub fn update(activity: Json<InboxActivity>, connection: connection::DbConn) -> Json<JsonValue> {
-    let update = InboxActivity {
-        ..activity.into_inner()
-    };
-    Json(json!({
-        "success": update_inbox_activity(update, &connection)
-    }))
-}
-
-#[delete("/<id>")]
-pub fn delete(id: String, connection: connection::DbConn) -> Json<JsonValue> {
-    Json(json!({ "success": delete_inbox_activity(id, &connection) }))
 }

@@ -1,4 +1,4 @@
 DROP TABLE actors;
-DROP TABLE following;
-DROP TABLE followers;
+DROP TABLE followings;
+DROP TABLE objects;
 DROP TABLE activities;

@@ -1,42 +1,40 @@
 table! {
+    activities (id) {
+        id -> Varchar,
+        acttype -> Varchar,
+        author -> Varchar,
+        published -> Nullable<Timestamp>,
+        object -> Varchar,
+        contents -> Nullable<Json>,
+    }
+}
+
+table! {
     actors (id) {
         id -> Varchar,
-        username -> Text,
-        profile -> Varchar,
     }
 }
 
 table! {
-    followers (actor) {
-        actor -> Varchar,
-        since -> Timestamp,
+    followings (target) {
+        target -> Varchar,
+        follower -> Varchar,
+        since -> Nullable<Timestamp>,
     }
 }
 
 table! {
-    following (actor) {
-        actor -> Varchar,
-        since -> Timestamp,
-    }
-}
-
-table! {
-    inbox (id) {
+    objects (id) {
         id -> Varchar,
-        actor -> Varchar,
-        payload -> Nullable<Json>,
+        objtype -> Varchar,
+        author -> Varchar,
+        published -> Nullable<Timestamp>,
+        contents -> Nullable<Json>,
     }
 }
 
-table! {
-    outbox (id) {
-        id -> Varchar,
-        payload -> Nullable<Json>,
-    }
-}
+joinable!(activities -> actors (author));
+joinable!(activities -> objects (object));
+joinable!(objects -> actors (author));
 
-joinable!(followers -> actors (actor));
-joinable!(following -> actors (actor));
-joinable!(inbox -> actors (actor));
-
-allow_tables_to_appear_in_same_query!(actors, followers, following, inbox, outbox,);
+allow_tables_to_appear_in_same_query!(activities, actors, followings, objects,);

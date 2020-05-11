@@ -17,36 +17,7 @@ mod api;
 
 fn main() {
     rocket::ignite()
-        .mount(
-            "/actors",
-            routes![
-                api::actors::create,
-                api::actors::list_all,
-                api::actors::read,
-                api::actors::update,
-                api::actors::delete
-            ],
-        )
-        .mount(
-            "/inbox",
-            routes![
-                api::inbox::create,
-                api::inbox::list_all,
-                api::inbox::read,
-                api::inbox::update,
-                api::inbox::delete
-            ],
-        )
-        .mount(
-            "/outbox",
-            routes![
-                api::outbox::create,
-                api::outbox::list_all,
-                api::outbox::read,
-                api::outbox::update,
-                api::outbox::delete
-            ],
-        )
+        .mount("/inbox", routes![api::inbox::post, api::inbox::get,])
         .register(catchers![not_found])
         .manage(connection::init_pool())
         .launch();

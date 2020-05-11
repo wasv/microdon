@@ -1,24 +1,12 @@
 use std::result::Result;
 
+use serde_json::Value;
+
 use crate::connection::DbConn;
-use crate::models::outbox::*;
+use crate::models::Activity;
 
 /// Handles a new create activity.
-pub fn create(connection: DbConn, payload: serde_json::Value) -> Result<(), String> {
-    add_to_outbox(connection, payload)
-}
-
-/// Add a new activity to the outbox.
-fn add_to_outbox(connection: DbConn, payload: serde_json::Value) -> Result<(), String> {
-    let activity_id = payload["id"].as_str().ok_or("No activity id")?;
-
-    insert_outbox_activity(
-        OutboxActivity {
-            id: activity_id.to_string(),
-            payload: Some(payload),
-        },
-        &connection,
-    )
-    .or(Err("DB Insert Failed"))?;
-    Ok(())
+pub fn create(db: DbConn, contents: Value) -> Result<Activity, String> {
+    let activity = Activity::get(contents, &db)?.insert(&db)?;
+    Ok(activity)
 }
