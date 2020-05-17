@@ -1,11 +1,13 @@
 FROM rustlang/rust:nightly-slim
 
-RUN apt-get update && apt-get install -y default-libmysqlclient-dev \
+RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/myapp
 COPY . .
 
-RUN cargo install --path .
+RUN cargo install --path . && cargo clean
 
-CMD ["main"]
+EXPOSE 8000
+
+CMD ["web"]
