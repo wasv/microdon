@@ -33,7 +33,7 @@ impl Object {
                 Ok(object) => return Ok(object),
                 _ => fetch(id)?
                     .as_object()
-                    .ok_or("Invalid activity reference.".to_string())?
+                    .ok_or_else(|| "Invalid activity reference.".to_string())?
                     .to_owned(),
             },
             Value::Object(contents) => contents,
@@ -52,7 +52,7 @@ impl Object {
             objtype,
             author: actor.id,
             published: None,
-            contents: Some(Value::Object(contents.to_owned())),
+            contents: Some(Value::Object(contents)),
         })
     }
 
@@ -80,7 +80,7 @@ impl Object {
         diesel::update(Self::table().find(self.id.clone()))
             .set(self)
             .execute(db)?;
-        Self::read(self.id.clone().clone(), db)
+        Self::read(self.id.clone(), db)
     }
     pub fn remove(&self, db: &Conn) -> bool {
         diesel::delete(Self::table().find(self.id.clone()))

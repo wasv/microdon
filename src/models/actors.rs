@@ -36,7 +36,7 @@ impl Actor {
                 Ok(object) => return Ok(object),
                 _ => fetch(id)?
                     .as_object()
-                    .ok_or("Invalid activity reference.".to_string())?
+                    .ok_or_else(|| "Invalid activity reference.".to_string())?
                     .to_owned(),
             },
             Value::Object(contents) => contents,

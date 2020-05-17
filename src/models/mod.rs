@@ -14,5 +14,5 @@ fn fetch(id: String) -> Result<serde_json::Value, String> {
         .header(reqwest::header::ACCEPT, "application/activity+json")
         .send()
         .and_then(|r| r.json::<serde_json::Value>())
-        .or(Err("Could not get activity.".to_string()))
+        .or_else(|e| Err(format!("Could not get activity: {}",e)))
 }
