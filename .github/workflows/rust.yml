@@ -10,13 +10,14 @@ jobs:
     name: Clippy Check
     steps:
     - uses: actions/checkout@v2
-    - name: Stable with rustfmt and clippy
+    - name: Install Nightly Rust with Clippy
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: nightly
         components: clippy
-    - name: Annotate commit with clippy warnings
+        override: true
+    - name: Annotate commit with Clippy warnings
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
