@@ -14,6 +14,8 @@ extern crate rocket;
 extern crate serde_derive;
 extern crate reqwest;
 extern crate serde_json;
+
+#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 
