@@ -82,7 +82,7 @@ impl Object {
         Self::table()
             .find(id)
             .first(db)
-            .or_else(|e| Err(format!("Could not read object. {}", e)))
+            .map_err(|e| format!("Could not read object. {}", e))
     }
 
     /// Reads all Objects from the database.
@@ -97,18 +97,18 @@ impl Object {
         // Attempt to insert author.
         Actor::get(Value::String(self.author.clone()), &db)?
             .insert(&db)
-            .or_else(|e| Err(format!("Could not insert author. {}", e)))?;
+            .map_err(|e| format!("Could not insert author. {}", e))?;
 
         // Insert Object into database.
         diesel::insert_into(Self::table())
             .values(self)
             .on_conflict_do_nothing()
             .execute(db)
-            .or_else(|e| Err(format!("Could not insert object. {}", e)))?;
+            .map_err(|e| format!("Could not insert object. {}", e))?;
 
         // Return Object from database using id.
         Self::read(self.id.clone(), db)
-            .or_else(|e| Err(format!("Could not read inserted object. {}", e)))
+            .map_err(|e| format!("Could not read inserted object. {}", e))
     }
 
     /// Updates an Object in the database.
@@ -116,11 +116,10 @@ impl Object {
         diesel::update(Self::table().find(self.id.clone()))
             .set(self)
             .execute(db)
-            .or_else(|e| Err(format!("Could not update object. {}", e)))?;
+            .map_err(|e| format!("Could not update object. {}", e))?;
 
         // Return updated Object from database using id.
-        Self::read(self.id.clone(), db)
-            .or_else(|e| Err(format!("Could not read updated object. {}", e)))
+        Self::read(self.id.clone(), db).map_err(|e| format!("Could not read updated object. {}", e))
     }
 
     /// Removes an Object from the database.

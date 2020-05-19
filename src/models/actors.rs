@@ -64,7 +64,7 @@ impl Actor {
         Self::table()
             .find(id)
             .first(db)
-            .or_else(|e| Err(format!("Could not read actor. {}", e)))
+            .map_err(|e| format!("Could not read actor. {}", e))
     }
 
     /// Reads all Actors from the database.
@@ -78,9 +78,8 @@ impl Actor {
             .values(self)
             .on_conflict_do_nothing()
             .execute(db)
-            .or_else(|e| Err(format!("Could not insert actor. {}", e)))?;
-        Self::read(self.id.clone(), db)
-            .or_else(|e| Err(format!("Could not read inserted actor. {}", e)))
+            .map_err(|e| format!("Could not insert actor. {}", e))?;
+        Self::read(self.id.clone(), db).map_err(|e| format!("Could not read inserted actor. {}", e))
     }
 
     /// Removes an Object from the database.

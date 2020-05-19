@@ -53,7 +53,7 @@ impl Activity {
         // Parses Activity struct from JSON struct.
         let activity_id = contents
             .get("id")
-            .ok_or_else(|| "No activity id.")?
+            .ok_or_else(|| "activity id.")?
             .as_str()
             .ok_or("No activity id")?;
         let actor = Actor::get(
@@ -84,7 +84,7 @@ impl Activity {
         Self::table()
             .find(id)
             .first(db)
-            .or_else(|e| Err(format!("Could not read activity. {}", e)))
+            .map_err(|e| format!("Could not read activity. {}", e))
     }
 
     /// Reads all Activities from the database.
@@ -98,22 +98,22 @@ impl Activity {
     pub fn insert(&self, db: &Conn) -> Result<Self, String> {
         Actor::get(Value::String(self.author.clone()), &db)?
             .insert(&db)
-            .or_else(|e| Err(format!("Could not insert author. {}", e)))?;
+            .map_err(|e| format!("Could not insert author. {}", e))?;
 
         Object::get(Value::String(self.object.clone()), &db)?
             .insert(&db)
-            .or_else(|e| Err(format!("Could not insert object. {}", e)))?;
+            .map_err(|e| format!("Could not insert object. {}", e))?;
 
         // Insert Object into database.
         diesel::insert_into(Self::table())
             .values(self)
             .on_conflict_do_nothing()
             .execute(db)
-            .or_else(|e| Err(format!("Could not insert activity. {}", e)))?;
+            .map_err(|e| format!("Could not insert activity. {}", e))?;
 
         // Return Activity from database using id.
         Self::read(self.id.clone(), db)
-            .or_else(|e| Err(format!("Could not read inserted activity. {}", e)))
+            .map_err(|e| format!("Could not read inserted activity. {}", e))
     }
 
     /// Updates an Object in the database.
@@ -121,11 +121,11 @@ impl Activity {
         diesel::update(Self::table().find(self.id.clone()))
             .set(self)
             .execute(db)
-            .or_else(|e| Err(format!("Could not update activity. {}", e)))?;
+            .map_err(|e| format!("Could not update activity. {}", e))?;
 
         // Return updated Activity from database using id.
         Self::read(self.id.clone(), db)
-            .or_else(|e| Err(format!("Could not read updated activity. {}", e)))
+            .map_err(|e| format!("Could not read updated activity. {}", e))
     }
 
     /// Removes an Object from the database.
