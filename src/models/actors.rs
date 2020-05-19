@@ -30,6 +30,12 @@ pub struct Following {
 }
 
 impl Actor {
+    /// Obtains an Actor. By parsing contents or reading from database.
+    ///
+    /// If contents is an JSON struct, the value is parsed into a Actor struct.
+    /// If contents is a string, the value is read from the database or retrieved based on the ID.
+    ///
+    /// Does not insert Actor, only creates struct.
     pub fn get(contents: Value, db: &Conn) -> Result<Self, String> {
         let contents = match contents {
             Value::String(id) => match Self::read(id.clone(), db) {
@@ -43,20 +49,30 @@ impl Actor {
             _ => return Err("Invalid activity reference.".to_string()),
         };
 
-        let id = contents["id"].as_str().ok_or("No object id")?.to_string();
+        // Parses Actor struct from JSON struct.
+        let id = contents
+            .get("id")
+            .ok_or_else(|| "No activity id.")?
+            .as_str()
+            .ok_or("No object id")?
+            .to_string();
         Ok(Actor { id })
     }
 
+    /// Reads an Actor from the database.
     pub fn read(id: String, db: &Conn) -> Result<Self, String> {
         Self::table()
             .find(id)
             .first(db)
             .or_else(|e| Err(format!("Could not read actor. {}", e)))
     }
+
+    /// Reads all Actors from the database.
     pub fn list(db: &Conn) -> Vec<Self> {
         Self::table().load::<Self>(db).unwrap_or_default()
     }
 
+    /// Inserts an Actor into the database.
     pub fn insert(&self, db: &Conn) -> Result<Self, String> {
         diesel::insert_into(Self::table())
             .values(self)
@@ -66,6 +82,8 @@ impl Actor {
         Self::read(self.id.clone(), db)
             .or_else(|e| Err(format!("Could not read inserted actor. {}", e)))
     }
+
+    /// Removes an Object from the database.
     pub fn remove(&self, db: &Conn) -> bool {
         diesel::delete(Self::table().find(self.id.clone()))
             .execute(db)

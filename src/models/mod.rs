@@ -8,11 +8,12 @@ pub use self::actors::{Actor, Following};
 mod objects;
 pub use self::objects::Object;
 
+/// Helper function for retrieving ActivityPub objects.
 fn fetch(id: String) -> Result<serde_json::Value, String> {
     reqwest::blocking::Client::new()
         .get(&id)
         .header(reqwest::header::ACCEPT, "application/activity+json")
         .send()
         .and_then(|r| r.json::<serde_json::Value>())
-        .or_else(|e| Err(format!("Could not get activity: {}",e)))
+        .or_else(|e| Err(format!("Could not get object: {}", e)))
 }
