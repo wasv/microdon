@@ -36,11 +36,12 @@ impl Actor {
     /// If contents is a string, the value is read from the database or retrieved based on the ID.
     ///
     /// Does not insert Actor, only creates struct.
-    pub fn get(contents: Value, db: &Conn) -> Result<Self, String> {
+    pub async fn get(contents: Value, db: &Conn) -> Result<Self, String> {
         let contents = match contents {
             Value::String(id) => match Self::read(id.clone(), db) {
                 Ok(object) => return Ok(object),
-                _ => fetch(id)?
+                _ => fetch(id)
+                    .await?
                     .as_object()
                     .ok_or_else(|| "Invalid activity reference.".to_string())?
                     .to_owned(),
@@ -73,7 +74,7 @@ impl Actor {
     }
 
     /// Inserts an Actor into the database.
-    pub fn insert(&self, db: &Conn) -> Result<Self, String> {
+    pub async fn insert(&self, db: &Conn) -> Result<Self, String> {
         diesel::insert_into(Self::table())
             .values(self)
             .on_conflict_do_nothing()

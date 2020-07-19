@@ -1,7 +1,4 @@
 use dotenv::dotenv;
-use rocket::http::Status;
-use rocket::request::{self, FromRequest};
-use rocket::{Outcome, Request, State};
 use std::env;
 use std::ops::Deref;
 
@@ -23,11 +20,8 @@ fn database_url() -> String {
     format!("postgres://{}:{}@{}/{}", dbuser, dbpass, dbhost, dbname)
 }
 
-/// Shorthand type for the pooled database connection.
-pub struct DbConn(pub r2d2::PooledConnection<ConnectionManager<Conn>>);
-
 /// Shorthand type for the database pool.
-type Pool = r2d2::Pool<ConnectionManager<Conn>>;
+pub type Pool = r2d2::Pool<ConnectionManager<Conn>>;
 
 /// Creates a new database pool.
 pub fn init_pool() -> Pool {
@@ -44,17 +38,8 @@ pub fn perform_migrations(pool: &Pool) {
     embedded_migrations::run(&conn).unwrap_or_else(|_| panic!("Error running migration."));
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
-    type Error = ();
-
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, Self::Error> {
-        let pool = request.guard::<State<Pool>>()?;
-        match pool.get() {
-            Ok(conn) => Outcome::Success(DbConn(conn)),
-            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
-        }
-    }
-}
+/// Shorthand type for the pooled database connection.
+pub struct DbConn(pub r2d2::PooledConnection<ConnectionManager<Conn>>);
 
 impl Deref for DbConn {
     type Target = Conn;

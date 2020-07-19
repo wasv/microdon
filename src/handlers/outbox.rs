@@ -6,7 +6,7 @@ use crate::connection::DbConn;
 use crate::models::Activity;
 
 /// Handles a new create activity.
-pub fn create(db: DbConn, contents: Value) -> Result<Activity, String> {
-    let activity = Activity::get(contents, &db)?.insert(&db)?;
+pub async fn create(db: DbConn, contents: Value) -> Result<Activity, String> {
+    let activity = Activity::get(contents, &db).await?.insert(&db).await?;
     Ok(activity)
 }

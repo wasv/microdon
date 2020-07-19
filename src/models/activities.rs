@@ -37,11 +37,12 @@ impl Activity {
     /// If contents is a string, the value is read from the database or retrieved based on the ID.
     ///
     /// Does not insert Activity, only creates struct.
-    pub fn get(contents: Value, db: &Conn) -> Result<Self, String> {
+    pub async fn get(contents: Value, db: &Conn) -> Result<Self, String> {
         let contents = match contents {
             Value::String(id) => match Self::read(id.clone(), db) {
                 Ok(object) => return Ok(object),
-                _ => fetch(id)?
+                _ => fetch(id)
+                    .await?
                     .as_object()
                     .ok_or_else(|| "Invalid activity reference.".to_string())?
                     .to_owned(),
@@ -59,11 +60,13 @@ impl Activity {
         let actor = Actor::get(
             contents.get("actor").ok_or_else(|| "No actor.")?.clone(),
             &db,
-        )?;
+        )
+        .await?;
         let object = Object::get(
             contents.get("object").ok_or_else(|| "No object.")?.clone(),
             &db,
-        )?;
+        )
+        .await?;
         let acttype = contents["type"]
             .as_str()
             .ok_or("No type field found in activity")?
@@ -95,13 +98,17 @@ impl Activity {
     /// Inserts an Activity into the database.
     ///
     /// Also attempts to obtain and insert the Actor and Object, if they do not already exist.
-    pub fn insert(&self, db: &Conn) -> Result<Self, String> {
-        Actor::get(Value::String(self.author.clone()), &db)?
+    pub async fn insert(&self, db: &Conn) -> Result<Self, String> {
+        Actor::get(Value::String(self.author.clone()), &db)
+            .await?
             .insert(&db)
+            .await
             .map_err(|e| format!("Could not insert author. {}", e))?;
 
-        Object::get(Value::String(self.object.clone()), &db)?
+        Object::get(Value::String(self.object.clone()), &db)
+            .await?
             .insert(&db)
+            .await
             .map_err(|e| format!("Could not insert object. {}", e))?;
 
         // Insert Object into database.

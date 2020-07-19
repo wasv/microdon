@@ -1,18 +1,32 @@
+use actix_web::{error, web, Responder};
+use futures::StreamExt;
+
+use super::State;
+
 use microdon::connection::DbConn;
 use microdon::handlers::inbox;
 use microdon::models::Activity;
 
-use rocket::Data;
-use rocket_contrib::json::Json;
+pub async fn post(mut body_stream: web::Payload, state: web::Data<State>) -> impl Responder {
+    let mut body = web::BytesMut::new();
+    while let Some(item) = body_stream.next().await {
+        body.extend_from_slice(&item?);
+    }
+    let body = body.freeze();
 
-#[post("/", data = "<data>")]
-pub fn post(data: Data, connection: DbConn) -> Result<Json<Activity>, String> {
-    serde_json::from_reader(data.open())
-        .map_err(|e| format!("JSON Error {}", e))
-        .and_then(|data| inbox::create(connection, data).map(Json))
+    let db = DbConn(state.db.get().unwrap());
+
+    let json_act = serde_json::from_slice(&body[..])
+        .map_err(|e| error::ErrorBadRequest(format!("JSON Error {}", e)))?;
+
+    inbox::create(db, json_act)
+        .await
+        .map_err(|e| error::ErrorInternalServerError(format!("Create failed {}", e)))
+        .and_then(|data| Ok(web::Json(data)))
 }
 
-#[get("/")]
-pub fn get(connection: DbConn) -> Json<Vec<Activity>> {
-    Json(Activity::list(&connection))
+pub async fn get(state: web::Data<State>) -> impl Responder {
+    let db = DbConn(state.db.get().unwrap());
+
+    web::Json(Activity::list(&db))
 }

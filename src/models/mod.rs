@@ -9,11 +9,16 @@ mod objects;
 pub use self::objects::Object;
 
 /// Helper function for retrieving ActivityPub objects.
-fn fetch(id: String) -> Result<serde_json::Value, String> {
-    reqwest::blocking::Client::new()
+async fn fetch(id: String) -> Result<serde_json::Value, String> {
+    let client = reqwest::Client::new();
+
+    client
         .get(&id)
         .header(reqwest::header::ACCEPT, "application/activity+json")
         .send()
-        .and_then(|r| r.json::<serde_json::Value>())
-        .map_err(|e| format!("Could not get object: {}", e))
+        .await
+        .map_err(|e| format!("Could not get object: {}", e))?
+        .json::<serde_json::Value>()
+        .await
+        .map_err(|e| format!("Could parse json: {}", e))
 }

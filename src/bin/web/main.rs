@@ -1,29 +1,22 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
-#[macro_use]
-extern crate rocket;
-extern crate diesel;
-
-#[macro_use]
-extern crate rocket_contrib;
+extern crate actix_rt;
+extern crate actix_web;
+extern crate futures;
 extern crate serde_json;
 
-use rocket::Request;
-use rocket_contrib::json::{Json, JsonValue};
-
-use microdon::connection;
+use actix_web::{web, App, HttpServer};
 
 mod api;
 
-fn main() {
-    rocket::ignite()
-        .mount("/inbox", routes![api::inbox::post, api::inbox::get,])
-        .register(catchers![not_found])
-        .manage(connection::init_pool())
-        .launch();
-}
-
-#[catch(404)]
-fn not_found(_req: &Request) -> Json<JsonValue> {
-    Json(json!({ "error": "Not found" }))
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new().data(api::State::new()).service(
+            web::resource("/inbox")
+                .route(web::post().to(api::inbox::post))
+                .route(web::get().to(api::inbox::get)),
+        )
+    })
+    .bind("127.0.0.1:8088")?
+    .run()
+    .await
 }

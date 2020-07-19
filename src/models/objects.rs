@@ -34,11 +34,12 @@ impl Object {
     /// If contents is a string, the value is read from the database or retrieved based on the ID.
     ///
     /// Does not insert Object, only creates struct.
-    pub fn get(contents: Value, db: &Conn) -> Result<Self, String> {
+    pub async fn get(contents: Value, db: &Conn) -> Result<Self, String> {
         let contents = match contents {
             Value::String(id) => match Self::read(id.clone(), db) {
                 Ok(object) => return Ok(object),
-                _ => fetch(id)?
+                _ => fetch(id)
+                    .await?
                     .as_object()
                     .ok_or_else(|| "Invalid activity reference.".to_string())?
                     .to_owned(),
@@ -66,7 +67,8 @@ impl Object {
                 .ok_or_else(|| "No actor found in object.".to_string())?
                 .clone(),
             &db,
-        )?;
+        )
+        .await?;
 
         Ok(Object {
             id,
@@ -93,10 +95,12 @@ impl Object {
     /// Inserts an Object into the database.
     ///
     /// Also attempts to obtain and insert the Actor, if it does not already exist.
-    pub fn insert(&self, db: &Conn) -> Result<Self, String> {
+    pub async fn insert(&self, db: &Conn) -> Result<Self, String> {
         // Attempt to insert author.
-        Actor::get(Value::String(self.author.clone()), &db)?
+        Actor::get(Value::String(self.author.clone()), &db)
+            .await?
             .insert(&db)
+            .await
             .map_err(|e| format!("Could not insert author. {}", e))?;
 
         // Insert Object into database.

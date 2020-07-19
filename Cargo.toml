@@ -11,12 +11,11 @@ name = "microdon"
 path = "src/lib.rs"
 
 [features]
-default = ["cli"]
+default = ["cli", "web"]
 cli = ["clap"]
+web = ["actix-web", "actix-rt", "futures"]
 
 [dependencies]
-rocket = "0.4"
-rocket_contrib = { version = "0.4", features = ["diesel_postgres_pool"] }
 diesel = { version = "1.4", features = ["r2d2", "postgres", "serde_json"] }
 r2d2 = "0.8"
 diesel_migrations = { version = "1.4", features = ["postgres"] }
@@ -24,7 +23,10 @@ dotenv = "0.9.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
-clap = { version = "2", optional=true }
 reqwest = { version = "0.10", features = ["blocking", "json"] }
 pretty_env_logger = "0.4"
 log = "0.4"
+clap = { version = "2", optional=true }
+actix-rt = { version = "1.0", optional=true }
+actix-web = { version = "2.0", optional=true }
+futures = { version = "0.3", optional=true }
