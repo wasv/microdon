@@ -22,7 +22,7 @@ pub async fn post(mut body_stream: web::Payload, state: web::Data<State>) -> imp
     inbox::create(db, json_act)
         .await
         .map_err(|e| error::ErrorInternalServerError(format!("Create failed {}", e)))
-        .and_then(|data| Ok(web::Json(data)))
+        .map(web::Json)
 }
 
 pub async fn get(state: web::Data<State>) -> impl Responder {
