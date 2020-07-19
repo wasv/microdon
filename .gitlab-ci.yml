@@ -1,0 +1,27 @@
+rust:
+    image: "rustlang/rust:nightly"
+    before_script:
+    - apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
+
+    setup:
+    stage: .pre
+    script:
+    - rustc --version && cargo --version  # Print version info for debugging
+
+    cargo clippy:
+    stage: test
+    needs: ['cargo build']
+    script:
+    - cargo clippy --workspace --verbose
+
+docker:
+    image: docker:19.03.11
+    stage: build
+    services:
+    - docker:19.03.11-dind
+    variables:
+        IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
