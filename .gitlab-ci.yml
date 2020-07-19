@@ -1,22 +1,25 @@
-rust:
-    image: "rustlang/rust:nightly"
-    before_script:
-    - apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
+image: "rustlang/rust:nightly"
+before_script:
+- apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
 
-    setup:
+setup:
     stage: .pre
     script:
     - rustc --version && cargo --version  # Print version info for debugging
 
-    cargo clippy:
+cargo clippy:
+    stage: build
+    script:
+    - cargo clippy --workspace --verbose
+
+cargo clippy:
     stage: test
-    needs: ['cargo build']
     script:
     - cargo clippy --workspace --verbose
 
 docker:
     image: docker:19.03.11
-    stage: build
+    stage: deploy
     services:
     - docker:19.03.11-dind
     variables:
