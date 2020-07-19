@@ -1,4 +1,4 @@
-image: "rustlang/rust:nightly"
+image: "rust:latest"
 before_script:
 - apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
 
@@ -6,11 +6,6 @@ setup:
     stage: .pre
     script:
     - rustc --version && cargo --version  # Print version info for debugging
-
-cargo clippy:
-    stage: build
-    script:
-    - cargo clippy --workspace --verbose
 
 cargo clippy:
     stage: test

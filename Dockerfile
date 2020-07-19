@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-slim
+FROM rust:latest
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev \
  && rm -rf /var/lib/apt/lists/*
@@ -6,8 +6,8 @@ RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev \
 WORKDIR /usr/src/myapp
 COPY . .
 
-RUN cargo install --path . && cargo clean
+RUN cargo install --path . --no-default-features --bin web --features web && cargo clean
 
-EXPOSE 8000
+EXPOSE 8088
 
 CMD ["web"]

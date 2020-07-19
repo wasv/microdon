@@ -1,4 +1,5 @@
-/target
+.git/
+target/
 **/*.rs.bk
 .env
 *.db
