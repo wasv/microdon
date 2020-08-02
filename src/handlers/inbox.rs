@@ -19,3 +19,8 @@ pub async fn create(db: DbConn, contents: Value) -> Result<Activity, String> {
 fn forward_from_inbox(_payload: Value) -> Result<(), String> {
     Ok(()) // Stubbed for now.
 }
+
+/// Lists all known activities
+pub fn get_all(db: DbConn) -> Vec<Activity> {
+    Activity::list(&db)
+}
