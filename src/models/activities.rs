@@ -38,7 +38,7 @@ impl Activity {
     ///
     /// Does not insert Activity, only creates struct.
     pub async fn get(contents: Value, db: &Conn) -> Result<Self, String> {
-        let contents = match contents {
+        let mut contents = match contents {
             Value::String(id) => match Self::read(id.clone(), db) {
                 Ok(object) => return Ok(object),
                 _ => fetch(id)
@@ -51,12 +51,6 @@ impl Activity {
             _ => return Err("Invalid activity reference.".to_string()),
         };
 
-        // Parses Activity struct from JSON struct.
-        let activity_id = contents
-            .get("id")
-            .ok_or_else(|| "activity id.")?
-            .as_str()
-            .ok_or("No activity id")?;
         let actor = Actor::get(
             contents.get("actor").ok_or_else(|| "No actor.")?.clone(),
             &db,
@@ -67,6 +61,17 @@ impl Activity {
             &db,
         )
         .await?;
+
+        // Replace inline Object with Object ID
+        contents.insert("object".to_string(), Value::String(object.id.clone()));
+
+        // Parses Activity struct from JSON struct.
+        let activity_id = contents
+            .get("id")
+            .ok_or_else(|| "activity id.")?
+            .as_str()
+            .ok_or("No activity id")?;
+
         let acttype = contents["type"]
             .as_str()
             .ok_or("No type field found in activity")?
