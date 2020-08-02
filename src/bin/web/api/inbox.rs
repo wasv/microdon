@@ -2,9 +2,7 @@ use actix_web::{error, web, Responder};
 
 use super::State;
 
-use microdon::connection::DbConn;
 use microdon::handlers::inbox;
-use microdon::models::Activity;
 
 pub async fn post(body_stream: web::Payload, state: web::Data<State>) -> impl Responder {
     let activity = super::parse_body(body_stream).await?;
@@ -17,7 +15,5 @@ pub async fn post(body_stream: web::Payload, state: web::Data<State>) -> impl Re
 }
 
 pub async fn get(state: web::Data<State>) -> impl Responder {
-    let db = DbConn(state.db.get().unwrap());
-
-    web::Json(Activity::list(&db))
+    web::Json(inbox::get_all(state.get_db(), state.get_actor_id()))
 }

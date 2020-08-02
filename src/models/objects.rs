@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use std::time::SystemTime;
 
 use serde_json::Value;
@@ -22,9 +23,9 @@ pub struct Object {
     /// Foreign key to the author of the object, in the form of a URL to original Actor object.
     pub author: String,
     /// Time object was published if available.
-    pub published: Option<SystemTime>,
+    pub published: SystemTime,
     /// The contents of the object.
-    pub contents: Option<serde_json::Value>,
+    pub contents: serde_json::Value,
 }
 
 impl Object {
@@ -70,12 +71,18 @@ impl Object {
         )
         .await?;
 
+        let published = contents
+            .get("published")
+            .and_then(|v| v.as_str())
+            .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+            .ok_or_else(|| "No published date.")?;
+
         Ok(Object {
             id,
             objtype,
             author: actor.id,
-            published: None,
-            contents: Some(Value::Object(contents)),
+            published: published.into(),
+            contents: Value::Object(contents),
         })
     }
 

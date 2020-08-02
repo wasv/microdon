@@ -11,6 +11,7 @@ extern crate diesel_migrations;
 extern crate r2d2;
 #[macro_use]
 extern crate serde_derive;
+extern crate chrono;
 extern crate reqwest;
 extern crate serde_json;
 

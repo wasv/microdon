@@ -3,9 +3,9 @@ table! {
         id -> Varchar,
         acttype -> Varchar,
         author -> Varchar,
-        published -> Nullable<Timestamp>,
+        published -> Timestamp,
         object -> Varchar,
-        contents -> Nullable<Json>,
+        contents -> Json,
     }
 }
 
@@ -19,7 +19,7 @@ table! {
     followings (target) {
         target -> Varchar,
         follower -> Varchar,
-        since -> Nullable<Timestamp>,
+        since -> Timestamp,
     }
 }
 
@@ -28,8 +28,8 @@ table! {
         id -> Varchar,
         objtype -> Varchar,
         author -> Varchar,
-        published -> Nullable<Timestamp>,
-        contents -> Nullable<Json>,
+        published -> Timestamp,
+        contents -> Json,
     }
 }
 

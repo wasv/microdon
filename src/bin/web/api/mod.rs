@@ -7,17 +7,23 @@ use microdon::connection::DbConn;
 
 pub struct State {
     db: connection::Pool,
+    actor_id: String,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub fn new(actor_id: String) -> State {
         State {
             db: connection::init_pool(),
+            actor_id: actor_id,
         }
     }
 
     pub fn get_db(&self) -> DbConn {
         DbConn(self.db.get().unwrap())
+    }
+
+    pub fn get_actor_id(&self) -> String {
+        self.actor_id.clone()
     }
 }
 

@@ -2,12 +2,16 @@
 extern crate log;
 
 use clap::{App, SubCommand};
+use dotenv::dotenv;
 use microdon::connection;
 use microdon::handlers;
+use std::env;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     pretty_env_logger::init();
+
     let args = App::new("microdon")
         .subcommands(vec![
             SubCommand::with_name("create")
@@ -38,7 +42,9 @@ async fn main() {
             .unwrap_or_else(|e| error!("{}", e));
         }
         ("list", _) => {
-            if let Ok(res) = serde_json::to_string(&handlers::inbox::get_all(db)) {
+            let actor_id =
+                env::var("SELF").unwrap_or_else(|_| "http://localhost:8000/".to_string());
+            if let Ok(res) = serde_json::to_string(&handlers::inbox::get_all(db, actor_id)) {
                 println!("{}", res);
             }
         }

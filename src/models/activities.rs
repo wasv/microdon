@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use std::time::SystemTime;
 
 use serde_json::Value;
@@ -23,11 +24,11 @@ pub struct Activity {
     /// Foreign key to the author of the activity, in the form of a URL to original Actor object.
     pub author: String,
     /// Time activity was published if available.
-    pub published: Option<SystemTime>,
+    pub published: SystemTime,
     /// The id of the associated object, as a URL to the original object.
     pub object: String,
     /// The contents of the activity.
-    pub contents: Option<Value>,
+    pub contents: Value,
 }
 
 impl Activity {
@@ -77,13 +78,19 @@ impl Activity {
             .ok_or("No type field found in activity")?
             .to_string();
 
+        let published = contents
+            .get("published")
+            .and_then(|v| v.as_str())
+            .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+            .ok_or_else(|| "No published date.")?;
+
         Ok(Activity {
             id: activity_id.to_string(),
             acttype,
             author: actor.id,
             object: object.id,
-            contents: Some(Value::Object(contents.to_owned())),
-            published: None,
+            contents: Value::Object(contents.to_owned()),
+            published: published.into(),
         })
     }
 
