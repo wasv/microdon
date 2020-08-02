@@ -13,10 +13,10 @@ pub(crate) type Conn = PgConnection;
 /// Generates database url from environment variables.
 fn database_url() -> String {
     dotenv().ok();
-    let dbhost = env::var("DATABASE_HOST").expect("DATABASE_HOST must be set");
-    let dbuser = env::var("DATABASE_USER").expect("DATABASE_USER must be set");
-    let dbname = env::var("DATABASE_NAME").expect("DATABASE_NAME must be set");
-    let dbpass = env::var("DATABASE_PASS").expect("DATABASE_PASS must be set");
+    let dbhost = env::var("DATABASE_HOST").unwrap_or_else(|_| "localhost".to_string());
+    let dbuser = env::var("DATABASE_USER").unwrap_or_else(|_| "microdon".to_string());
+    let dbname = env::var("DATABASE_NAME").unwrap_or_else(|_| dbuser.clone());
+    let dbpass = env::var("DATABASE_PASS").unwrap_or_else(|_| "".to_string());
     format!("postgres://{}:{}@{}/{}", dbuser, dbpass, dbhost, dbname)
 }
 
